@@ -2,15 +2,29 @@ extends CharacterBody2D
 
 const SPEED = 100.0
 @onready var animation_tree: AnimationTree = $AnimationTree
+@onready var play_back = animation_tree.get("parameters/StateMachine/playback") as AnimationNodeStateMachinePlayback
 
 var input_vector: = Vector2.ZERO
+var last_direction: = Vector2(0, -1)
+
+func _ready() -> void:
+	animation_tree.active = true
+
 func _physics_process(delta: float) -> void:
-	input_vector = Input.get_vector("ui_left" , "ui_right" , "ui_up" , "ui_down")
-	if input_vector != Vector2.ZERO:
-		var direction_vector = Vector2(input_vector.x  , -input_vector.y)
-		update_blend_positions(direction_vector)
+	var state = play_back.get_current_node()
+	if state == "MoveState":
+		input_vector = Input.get_vector("run_left" , "run_right" , "run_up" , "run_down")
+		if input_vector != Vector2.ZERO:
+			var direction_vector = Vector2(input_vector.x  , -input_vector.y)
+			last_direction = direction_vector
+			update_blend_positions(direction_vector)
+		if Input.is_action_just_pressed("attack"):
+			animation_tree.set("parameters/StateMachine/AttackState/blend_position" , last_direction)
+			play_back.travel("AttackState")
+	elif state == "AttackState":
+		pass
 	velocity = input_vector * SPEED
-	move_and_slide()
+	move_and_slide() 
 	
 
 
